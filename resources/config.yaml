@@ -1,0 +1,10 @@
+schedule:
+  cduletype: MEMORY
+  dburl: ./sqlite.db
+  cduleconsistency: AT_MOST_ONCE
+bulbs:
+  - nightstand: 192.168.0.240
+  - sleepingroom: 192.168.0.241
+  - livingroom: 192.168.0.242
+  - kitchen: 192.168.0.243
+  - corridor: 192.168.0.244
