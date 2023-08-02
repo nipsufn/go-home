@@ -15,7 +15,8 @@ type Configuration struct {
 		Dburl            string `yaml:"dburl"`
 		Cduleconsistency string `yaml:"cduleconsistency"`
 	} `yaml:"schedule"`
-	Bulbs map[string]string `yaml:"bulbs"`
+	Bulbs      map[string]string `yaml:"bulbs"`
+	MasterBulb string            `yaml:"masterBulb"`
 }
 
 var ConfigSingleton Configuration
