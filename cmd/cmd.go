@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"go-home/cmd/bulb"
+	"go-home/cmd/serve"
 	"go-home/config"
 
 	"github.com/spf13/cobra"
@@ -34,6 +35,7 @@ func NewRootCmd() (cmd *cobra.Command) {
 	cmd.PersistentFlags().StringVar(&cfgPath, "config", "./resources/config.yaml", "Path to config file")
 	cmd.PersistentFlags().StringVarP(&logLevel, "loglevel", "l", "info", "Log level [panic|fatal|error|warn|warning|info|debug|trace]")
 	cmd.AddCommand(bulb.NewBulbCmd())
+	cmd.AddCommand(serve.NewServeCmd())
 
 	return cmd
 }
