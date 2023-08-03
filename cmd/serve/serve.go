@@ -2,16 +2,18 @@ package serve
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/spf13/cobra"
 
 	"go-home/cmd/schedule"
+	"go-home/config"
 )
 
 func NewServeCmd() (serveCmd *cobra.Command) {
 	serveCmd = &cobra.Command{
-		Use:   "list",
-		Short: "Turn lightbulb(s) on",
+		Use:   "serve",
+		Short: "Start HTTP server",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			go schedule.StartSchedules()
 			go schedule.MasterBulbLoop()
@@ -23,19 +25,20 @@ func NewServeCmd() (serveCmd *cobra.Command) {
 
 func listenAndServe() error {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", index)
+	mux.HandleFunc("/api", api)
 
-	return http.ListenAndServe(":3000", mux)
-
+	return http.ListenAndServe(":"+strconv.Itoa(int(config.ConfigSingleton.Serve.Port)), mux)
 }
 
-func index(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
+func api(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/api" {
 		http.NotFound(w, r)
 		return
 	}
 
-	// Common code for all requests can go here...
+	if r.URL.Query().Has("bulb") {
+
+	}
 
 	switch r.Method {
 	case http.MethodGet:

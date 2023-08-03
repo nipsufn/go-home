@@ -59,11 +59,11 @@ func getBulbStateByIP(bulb net.IP) error {
 
 func getBulbsStateByName(bulbs ...string) error {
 	var err error
-	for key, element := range config.ConfigSingleton.Bulbs {
-		if slices.Contains(bulbs, key) || len(bulbs) == 0 {
+	for key, element := range config.ConfigSingleton.Bulb.List {
+		if slices.Contains(bulbs, key) || slices.Contains(bulbs, "all") || len(bulbs) == 0 {
 			log.Infof("Checking bulb \"%s\"", key)
 			e := getBulbStateByIP(net.ParseIP(element))
-			errors.Join(e, err)
+			err = errors.Join(e, err)
 		}
 	}
 	return err
@@ -73,7 +73,7 @@ func getBulbsStateByName(bulbs ...string) error {
 //	var err, e error
 //	for _, bulb := range bulbs {
 //		if e = getBulbStateByIP(bulb); err != nil {
-//			errors.Join(err, e)
+//			err = errors.Join(err, e)
 //			continue
 //		}
 //	}
@@ -94,11 +94,11 @@ func newTurnOnCmd() (turnOnCmd *cobra.Command) {
 		Short: "Turn lightbulb(s) on",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var err error
-			for key, element := range config.ConfigSingleton.Bulbs {
+			for key, element := range config.ConfigSingleton.Bulb.List {
 				if slices.Contains(args, key) || len(args) == 0 {
 					log.Infof("Checking bulb \"%s\"", key)
 					e := turnOn(net.ParseIP(element), brightness, temperature, color)
-					errors.Join(e, err)
+					err = errors.Join(e, err)
 				}
 			}
 			return err
@@ -168,11 +168,11 @@ func newTurnOffCmd() (turnOnCmd *cobra.Command) {
 		Short: "Turn lightbulb(s) off",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var err error
-			for key, element := range config.ConfigSingleton.Bulbs {
+			for key, element := range config.ConfigSingleton.Bulb.List {
 				if slices.Contains(args, key) || len(args) == 0 {
 					log.Infof("Checking bulb \"%s\"", key)
 					e := turnOff(net.ParseIP(element))
-					errors.Join(e, err)
+					err = errors.Join(e, err)
 				}
 			}
 			return err
