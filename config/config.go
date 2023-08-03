@@ -11,12 +11,17 @@ import (
 
 type Configuration struct {
 	Schedule struct {
-		Cduletype        string `yaml:"cduletype"`
-		Dburl            string `yaml:"dburl"`
-		Cduleconsistency string `yaml:"cduleconsistency"`
-	} `yaml:"schedule"`
-	Bulbs      map[string]string `yaml:"bulbs"`
-	MasterBulb string            `yaml:"masterBulb"`
+		Cduletype        string `mapstructure:"cduletype"`
+		Dburl            string `mapstructure:"dburl"`
+		Cduleconsistency string `mapstructure:"cduleconsistency"`
+	} `mapstructure:"schedule"`
+	Bulb struct {
+		List   map[string]string `mapstructure:"bulbs"`
+		Master string            `mapstructure:"masterBulb"`
+	} `mapstructure:"bulb"`
+	Serve struct {
+		Port uint16 `mapstructure:"port"`
+	} `mapstructure:"serve"`
 }
 
 var ConfigSingleton Configuration
@@ -35,6 +40,9 @@ func Load(path string) error {
 	if err != nil {
 		log.Panicf("fatal error marshalling config file: %w", err)
 		return err
+	}
+	if cfg.Serve.Port < 1024 {
+		log.Panicf("condig field `serve.port` must > 1024: %d", cfg.Serve.Port)
 	}
 	ConfigSingleton = cfg
 	var absPath string

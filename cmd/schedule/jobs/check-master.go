@@ -8,7 +8,7 @@ import (
 )
 
 func PingMasterBulb() error {
-	pinger, err := probing.NewPinger(config.ConfigSingleton.Bulbs[config.ConfigSingleton.MasterBulb])
+	pinger, err := probing.NewPinger(config.ConfigSingleton.Bulb.List[config.ConfigSingleton.Bulb.Master])
 	if err != nil {
 		log.Errorf("Unable to create pinger: %s", err)
 	}
