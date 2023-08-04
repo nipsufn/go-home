@@ -3,6 +3,7 @@
         "cdule",
         "cduleconsistency",
         "cduletype",
+        "colour",
         "dburl",
         "Debugf",
         "deepaksinghvi",
@@ -16,6 +17,7 @@
         "RRGGBB",
         "sirupsen",
         "sleepingroom",
+        "Tracef",
         "wizz"
     ]
 }
