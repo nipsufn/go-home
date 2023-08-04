@@ -1,9 +1,11 @@
 package config
 
 import (
+	"net"
 	"path/filepath"
 	"strings"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
 
 	log "github.com/sirupsen/logrus"
@@ -16,7 +18,7 @@ type Configuration struct {
 		Cduleconsistency string `mapstructure:"cduleconsistency"`
 	} `mapstructure:"schedule"`
 	Bulb struct {
-		List   map[string]string `mapstructure:"bulbs"`
+		Map    map[string]net.IP `mapstructure:"bulbs"`
 		Master string            `mapstructure:"masterBulb"`
 	} `mapstructure:"bulb"`
 	Serve struct {
@@ -36,7 +38,15 @@ func Load(path string) error {
 		return err
 	}
 	var cfg Configuration
-	err = viper.Unmarshal(&cfg)
+	err = viper.Unmarshal(&cfg, viper.DecodeHook(
+		mapstructure.ComposeDecodeHookFunc(
+			// Function to support net.IP
+			mapstructure.StringToIPHookFunc(),
+			// Appended by the two default functions
+			mapstructure.StringToTimeDurationHookFunc(),
+			mapstructure.StringToSliceHookFunc(","),
+		),
+	))
 	if err != nil {
 		log.Panicf("fatal error marshalling config file: %w", err)
 		return err

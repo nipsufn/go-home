@@ -10,7 +10,8 @@
             "request": "launch",
             "mode": "auto",
             "program": "main.go",
-            "args": ["bulb", "list", "-l", "trace" ]
+            "args": ["serve", "-l", "trace" ]
+            //"args": ["bulb", "list", "-l", "trace" ]
         }
     ]
 }

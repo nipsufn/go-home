@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/deepaksinghvi/cdule v1.0.12
+	github.com/mitchellh/mapstructure v1.5.0
 	github.com/prometheus-community/pro-bing v0.3.0
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.16.0
@@ -26,7 +27,6 @@ require (
 	github.com/jinzhu/now v1.1.4 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-sqlite3 v1.14.9 // indirect
-	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.9 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/spf13/afero v1.9.5 // indirect
