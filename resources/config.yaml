@@ -1,7 +1,3 @@
-schedule:
-  cduletype: MEMORY
-  dburl: ./sqlite.db
-  cduleconsistency: AT_MOST_ONCE
 bulb:
   bulbs:
     nightstand: 192.168.0.240
@@ -12,3 +8,9 @@ bulb:
   masterBulb: corridor
 serve:
   port: 8090
+schedule:
+  db:
+    path: ./sqlite.db
+location:
+  lat: 50.273399
+  lon: 18.648058

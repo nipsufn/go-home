@@ -11,33 +11,9 @@ import (
 
 	"github.com/FerdinaKusumah/wizz"
 	wizzModels "github.com/FerdinaKusumah/wizz/models"
-	"github.com/spf13/cobra"
 
 	"go-home/config"
 )
-
-func NewBulbCmd() (bulbCmd *cobra.Command) {
-	bulbCmd = &cobra.Command{
-		Use:   "bulb",
-		Short: "Manage lightbulb(s)",
-	}
-	bulbCmd.AddCommand(newListCmd())
-	bulbCmd.AddCommand(newTurnOnCmd())
-	bulbCmd.AddCommand(newTurnOffCmd())
-
-	return bulbCmd
-}
-
-func newListCmd() (listCmd *cobra.Command) {
-	listCmd = &cobra.Command{
-		Use:   "list",
-		Short: "Turn lightbulb(s) on",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return GetBulbStateByName(args...)
-		},
-	}
-	return listCmd
-}
 
 func GetBulbStateByIP(bulbs ...net.IP) error {
 	var err error
@@ -73,25 +49,6 @@ func GetBulbStateByName(bulbs ...string) error {
 		}
 	}
 	return err
-}
-
-func newTurnOnCmd() (turnOnCmd *cobra.Command) {
-	var brightness uint8
-	var temperature uint
-	var color string
-	turnOnCmd = &cobra.Command{
-		Use:   "turnOn",
-		Short: "Turn lightbulb(s) on",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return TurnBulbOnByName(brightness, temperature, color, args...)
-		},
-	}
-	turnOnCmd.Flags().Uint8VarP(&brightness, "brightness", "b", 0, "Bulb brightness, 0-255")
-	turnOnCmd.MarkFlagRequired("brightness")
-	turnOnCmd.Flags().UintVarP(&temperature, "temperature", "t", 0, "Bulb color temperature, 2500-6500")
-	turnOnCmd.Flags().StringVarP(&color, "color", "c", "", "Bulb color RGB, #RRGGBB")
-	turnOnCmd.MarkFlagsMutuallyExclusive("temperature", "color")
-	return turnOnCmd
 }
 
 func TurnBulbOnByIP(brightness uint8, temperature uint, color string, bulbs ...net.IP) error {
@@ -162,17 +119,6 @@ func TurnBulbOnByName(brightness uint8, temperature uint, color string, bulbs ..
 	return err
 }
 
-func newTurnOffCmd() (turnOnCmd *cobra.Command) {
-	turnOnCmd = &cobra.Command{
-		Use:   "turnOff",
-		Short: "Turn lightbulb(s) off",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return TurnBulbOffByName(args...)
-		},
-	}
-	return turnOnCmd
-}
-
 func TurnBulbOffByIP(bulbs ...net.IP) error {
 	var (
 		response *wizzModels.ResponsePayload
@@ -198,8 +144,10 @@ func TurnBulbOffByIP(bulbs ...net.IP) error {
 func TurnBulbOffByName(bulbs ...string) error {
 	var err error
 	if len(bulbs) == 0 || bulbs[0] == "all" {
+		log.Debugf("Turne lightbulb all off")
 		TurnBulbOffByIP(maps.Values(config.ConfigSingleton.Bulb.Map)...)
 	} else {
+		log.Debugf("Turne lightbulb %v off", bulbs)
 		for _, bulb := range bulbs {
 			if ip, ok := config.ConfigSingleton.Bulb.Map[bulb]; ok {
 				e := TurnBulbOffByIP(ip)
