@@ -4,6 +4,7 @@ import (
 	"net"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
@@ -11,12 +12,26 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+type MasterBulbState struct {
+	mu sync.RWMutex
+	on bool
+}
+
+func (d *MasterBulbState) Set(isOn bool) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	d.on = isOn
+}
+
+func (d *MasterBulbState) Get() bool {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+
+	return d.on
+}
+
 type Configuration struct {
-	Schedule struct {
-		Cduletype        string `mapstructure:"cduletype"`
-		Dburl            string `mapstructure:"dburl"`
-		Cduleconsistency string `mapstructure:"cduleconsistency"`
-	} `mapstructure:"schedule"`
 	Bulb struct {
 		Map    map[string]net.IP `mapstructure:"bulbs"`
 		Master string            `mapstructure:"masterBulb"`
@@ -24,6 +39,15 @@ type Configuration struct {
 	Serve struct {
 		Port uint16 `mapstructure:"port"`
 	} `mapstructure:"serve"`
+	Schedule struct {
+		DB struct {
+			Path string `mapstructure:"path"`
+		} `mapstructure:"db"`
+	} `mapstructure:"schedule"`
+	Location struct {
+		Lat string `mapstructure:"lat"`
+		Lon string `mapstructure:"lon"`
+	} `mapstructure:"location"`
 }
 
 var ConfigSingleton Configuration
@@ -34,7 +58,7 @@ func Load(path string) error {
 	viper.AddConfigPath(filepath.Dir(path))
 	err := viper.ReadInConfig()
 	if err != nil {
-		log.Panicf("fatal error reading config file: %w", err)
+		log.Panicf("fatal error reading config file: %v", err)
 		return err
 	}
 	var cfg Configuration
@@ -48,11 +72,11 @@ func Load(path string) error {
 		),
 	))
 	if err != nil {
-		log.Panicf("fatal error marshalling config file: %w", err)
+		log.Panicf("fatal error marshalling config file: %v", err)
 		return err
 	}
 	if cfg.Serve.Port < 1024 {
-		log.Panicf("condig field `serve.port` must > 1024: %d", cfg.Serve.Port)
+		log.Panicf("config field `serve.port` must > 1024: %d", cfg.Serve.Port)
 	}
 	ConfigSingleton = cfg
 	var absPath string
