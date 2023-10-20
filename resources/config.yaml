@@ -6,6 +6,11 @@ bulb:
     kitchen: 192.168.0.243
     corridor: 192.168.0.244
   masterBulb: corridor
+  defaultState:
+    brightness: 50
+    temperature: 2700
+    color: ""
+    on: true
 serve:
   port: 8090
 schedule:
