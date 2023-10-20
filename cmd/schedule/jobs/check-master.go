@@ -17,12 +17,12 @@ func PingMasterBulbRoutine(bulbState *config.MasterBulbState) {
 		if err != nil && !bulbState.Get() {
 			log.Tracef("Master bulb already off")
 		} else if err != nil && bulbState.Get() {
-			log.Tracef("Master bulbb set off")
+			log.Tracef("Master bulb set off")
 			bulb.TurnBulbOffByName("all")
 			bulbState.Set(false)
 		} else if err == nil && !bulbState.Get() {
 			log.Tracef("Master bulb set on")
-			bulb.TurnBulbOnByName(255, 5000, "")
+			bulb.TurnBulbOnByState()
 			bulbState.Set(true)
 		} else {
 			log.Tracef("Master bulb already on")
