@@ -4,7 +4,6 @@ import (
 	"net"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	"golang.org/x/exp/maps"
 
@@ -13,25 +12,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 )
-
-type MasterBulbState struct {
-	mu sync.RWMutex
-	on bool
-}
-
-func (mbs *MasterBulbState) Set(isOn bool) {
-	mbs.mu.Lock()
-	defer mbs.mu.Unlock()
-
-	mbs.on = isOn
-}
-
-func (mbs *MasterBulbState) Get() bool {
-	mbs.mu.RLock()
-	defer mbs.mu.RUnlock()
-
-	return mbs.on
-}
 
 type Configuration struct {
 	Bulb struct {
@@ -56,72 +36,6 @@ type Configuration struct {
 		Lat string `mapstructure:"lat"`
 		Lon string `mapstructure:"lon"`
 	} `mapstructure:"location"`
-}
-
-type BulbState struct {
-	On          bool
-	Brightness  uint8
-	Temperature uint
-	Color       string
-}
-
-type State struct {
-	mu    sync.RWMutex
-	bulbs map[string]BulbState
-}
-
-func (s *State) Set(name string, state BulbState) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	s.bulbs[name] = state
-}
-func (s *State) SetOn(name string, state BulbState) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	s.bulbs[name] = state
-}
-func (s *State) SetBrightness(name string, brightness uint8) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	tmp := s.bulbs[name]
-	tmp.Brightness = brightness
-
-	s.bulbs[name] = tmp
-}
-func (s *State) SetTemperature(name string, temperature uint) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	tmp := s.bulbs[name]
-	tmp.Temperature = temperature
-
-	s.bulbs[name] = tmp
-}
-func (s *State) SetColor(name string, color string) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	tmp := s.bulbs[name]
-	tmp.Color = color
-
-	s.bulbs[name] = tmp
-}
-
-func (s *State) Get(name string) BulbState {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	return s.bulbs[name]
-}
-
-func (s *State) Init() {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	s.bulbs = make(map[string]BulbState)
 }
 
 var ConfigSingleton Configuration

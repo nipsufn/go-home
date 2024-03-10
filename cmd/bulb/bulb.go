@@ -31,7 +31,7 @@ func getBulbStateByIP(bulb net.IP) error {
 		err = errors.Join(e, err)
 	}
 	if err == nil {
-		log.Infof(`Read bulb state: %s`, string(result))
+		log.Debugf(`Read bulb state: %s`, string(result))
 	}
 
 	return err
@@ -113,12 +113,16 @@ func TurnBulbOnByName(brightness uint8, temperature uint, color string, bulbs ..
 				e = TurnBulbOffByName(bulb)
 			} else {
 				e = turnBulbOnByIP(dimming, temperature, color, ip)
-				if e == nil {
+				if e == nil && bulb != config.ConfigSingleton.Bulb.Master {
 					config.StateSingleton.Set(bulb, config.BulbState{
 						Brightness:  brightness,
 						Temperature: temperature,
 						Color:       color,
 						On:          (dimming > 0)})
+				} else if e == nil {
+					config.StateSingleton.SetBrightness(bulb, brightness)
+					config.StateSingleton.SetTemperature(bulb, temperature)
+					config.StateSingleton.SetColor(bulb, color)
 				}
 			}
 			err = errors.Join(e, err)
@@ -173,6 +177,9 @@ func TurnBulbOffByName(bulbs ...string) error {
 	for _, bulb := range bulbs {
 		if ip, ok := config.ConfigSingleton.Bulb.Map[bulb]; ok {
 			e := turnBulbOffByIP(ip)
+			if e == nil && bulb != config.ConfigSingleton.Bulb.Master {
+				config.StateSingleton.SetOn(bulb, false)
+			}
 			err = errors.Join(e, err)
 		}
 	}

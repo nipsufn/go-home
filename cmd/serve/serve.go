@@ -18,8 +18,7 @@ func NewServeCmd() (serveCmd *cobra.Command) {
 		Use:   "serve",
 		Short: "Start HTTP server",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var masterBulbState config.MasterBulbState
-			go schedule.StartSchedules(&masterBulbState)
+			go schedule.StartSchedules()
 			return listenAndServe()
 		},
 	}
