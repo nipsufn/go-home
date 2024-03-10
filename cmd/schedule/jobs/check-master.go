@@ -9,21 +9,22 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func PingMasterBulbRoutine(bulbState *config.MasterBulbState) {
+func PingMasterBulbRoutine() {
 	log.Debugf("Master bulb loop starting")
 	for {
 		connection.TimeoutMs = 500
 		err := bulb.GetBulbStateByName(config.ConfigSingleton.Bulb.Master)
-		if err != nil && !bulbState.Get() {
+
+		if err != nil && !config.StateSingleton.GetMasterState() {
 			log.Tracef("Master bulb already off")
-		} else if err != nil && bulbState.Get() {
+		} else if err != nil && config.StateSingleton.GetMasterState() {
 			log.Tracef("Master bulb set off")
 			bulb.TurnBulbOffByName("all")
-			bulbState.Set(false)
-		} else if err == nil && !bulbState.Get() {
+			config.StateSingleton.SetMasterState(false)
+		} else if err == nil && !config.StateSingleton.GetMasterState() {
 			log.Tracef("Master bulb set on")
 			bulb.TurnBulbOnByState()
-			bulbState.Set(true)
+			config.StateSingleton.SetMasterState(true)
 		} else {
 			log.Tracef("Master bulb already on")
 		}

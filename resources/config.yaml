@@ -1,10 +1,10 @@
 bulb:
   bulbs:
-    nightstand: 192.168.0.240
-    sleepingroom: 192.168.0.241
-    livingroom: 192.168.0.242
-    kitchen: 192.168.0.243
-    corridor: 192.168.0.244
+    nightstand: 192.168.88.248
+    sleepingroom: 192.168.88.251
+    livingroom: 192.168.88.252
+    kitchen: 192.168.88.250
+    corridor: 192.168.88.249
   masterBulb: corridor
   defaultState:
     brightness: 50
