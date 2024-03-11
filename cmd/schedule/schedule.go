@@ -5,13 +5,12 @@ package schedule
 
 import (
 	"fmt"
-	"go-home/cmd/bulb"
 	"go-home/config"
-	"strconv"
 	"time"
 
+	myJobs "go-home/cmd/schedule/jobs"
+
 	"github.com/go-co-op/gocron/v2"
-	"github.com/nathan-osman/go-sunrise"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -19,7 +18,7 @@ import (
 
 type Job struct {
 	gorm.Model
-	Id       string
+	Name     string
 	Schedule string
 	OpName   string
 }
@@ -33,48 +32,9 @@ func bootstrapJob(opName string) error {
 	log.Debugf("in bootstrapJob")
 	switch opName {
 	case "sunset":
-		log.Infof("scheduling sunset")
-		// TODO: move this validation to config load
-		lat, err := strconv.ParseFloat(config.ConfigSingleton.Location.Lat, 64)
-		if err != nil {
-			log.Errorf("could not convert latitude %s to float", config.ConfigSingleton.Location.Lat)
-			return nil
-		}
-		lon, err := strconv.ParseFloat(config.ConfigSingleton.Location.Lon, 64)
-		if err != nil {
-			log.Errorf("could not convert longitude %s to float", config.ConfigSingleton.Location.Lon)
-			return nil
-		}
-		_, sunset := sunrise.SunriseSunset(
-			lat, lon, time.Now().Year(), time.Now().Month(), time.Now().Day())
-		_, err = scheduler.NewJob(
-			gocron.OneTimeJob(
-				gocron.OneTimeJobStartDateTime(sunset.Add(time.Minute*-30))),
-			gocron.NewTask(func() {
-				log.Infof("running sunset routine")
-			}))
-		if err != nil {
-			log.Errorf("could not schedule sunset job")
-			return nil
-		}
-		return nil
+		return myJobs.Sunset(scheduler)
 	case "wakeup":
-		log.Infof("running wakeup routine")
-		var i uint8
-		// range from 0 to ~3800
-		// k = a*i + b
-		iStart := uint8(25)
-		iStop := uint8(254)
-		a := 3800.0 / float64(iStop-iStart)
-		b := float64(iStart) * -a
-		for i = iStart; i <= iStop; i++ {
-			err := bulb.TurnBulbOnByName(i, 2700+uint(a*float64(i)+b), "", "all")
-			if err != nil {
-				log.Errorf("Can't turn on bulb(s): %v", err)
-			}
-			time.Sleep(time.Second * 1)
-		}
-		return nil
+		return myJobs.Wakeup(scheduler)
 	default:
 		return fmt.Errorf("operation %s is not defined", opName)
 	}
@@ -87,22 +47,6 @@ func doesJobWithNameExist(name string) bool {
 		}
 	}
 	return false
-}
-
-type gocronLogger struct {
-}
-
-func (l gocronLogger) Debug(msg string, args ...any) {
-	log.Debugf("gocron: %s: %v", msg, args)
-}
-func (l gocronLogger) Info(msg string, args ...any) {
-	log.Infof("gocron: %s: %v", msg, args)
-}
-func (l gocronLogger) Warn(msg string, args ...any) {
-	log.Warnf("gocron: %s: %v", msg, args)
-}
-func (l gocronLogger) Error(msg string, args ...any) {
-	log.Errorf("gocron: %s: %v", msg, args)
 }
 
 func StartSchedules() error {
@@ -122,7 +66,7 @@ func StartSchedules() error {
 	var jobs []Job
 	db.Find(&jobs)
 	for _, job := range jobs {
-		_, err = scheduler.NewJob(gocron.CronJob(job.Schedule, false), gocron.NewTask(func() { bootstrapJob(job.OpName) }))
+		_, err = scheduler.NewJob(gocron.CronJob(job.Schedule, true), gocron.NewTask(func() { bootstrapJob(job.OpName) }))
 		if err != nil {
 			log.Errorf("cannot recreate job: %v", err)
 			return err
@@ -140,7 +84,7 @@ func StartSchedules() error {
 	}
 
 	if !doesJobWithNameExist("userdef_wakeup-alarm") {
-		_, err = scheduler.NewJob(gocron.CronJob("00 12 * * *", false), gocron.NewTask(func() { bootstrapJob("wakeup") }))
+		_, err = scheduler.NewJob(gocron.CronJob("00 00 12 * * *", true), gocron.NewTask(func() { bootstrapJob("wakeup") }))
 		if err != nil {
 			log.Errorf("cannot schedule wakeup job: %v", err)
 			return err
