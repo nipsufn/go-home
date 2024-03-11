@@ -48,7 +48,6 @@ func HandleBulbApiRequest(w http.ResponseWriter, r *http.Request) {
 				color       string
 				err         error
 			)
-			//TODO fail if both color and colour are set
 			color = r.URL.Query().Get("colour") + r.URL.Query().Get("color")
 			if brightness, err = strconv.Atoi(r.URL.Query().Get("brightness")); err != nil {
 				log.Errorf("Processing API call: cannot cast brightness as int")
