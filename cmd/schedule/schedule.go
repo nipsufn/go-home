@@ -1,6 +1,3 @@
-// TODO:
-//   - check: if no sqlite db -> bootstrap, otherwise leave (user might have disabled)
-//   - set up default alarm: fake sunrise plus radio (online audio stream) playback (config/sqlite)
 package schedule
 
 import (
@@ -75,7 +72,7 @@ func StartSchedules() error {
 	}
 	// check if sunset job exists, create if not
 	if !doesJobWithNameExist("builtin_sunset_gen") {
-		_, err = scheduler.NewJob(gocron.CronJob("00 00 15 * * *", true), gocron.NewTask(func() { bootstrapJob("sunset") }))
+		_, err = scheduler.NewJob(gocron.CronJob("00 00 15 * * *", true), gocron.NewTask(func() { bootstrapJob("sunset") }), gocron.WithName("builtin_sunset_gen"))
 		if err != nil {
 			log.Errorf("cannot schedule sunset job: %v", err)
 			return err
@@ -84,7 +81,7 @@ func StartSchedules() error {
 	}
 
 	if !doesJobWithNameExist("userdef_wakeup-alarm") {
-		_, err = scheduler.NewJob(gocron.CronJob("00 00 12 * * *", true), gocron.NewTask(func() { bootstrapJob("wakeup") }))
+		_, err = scheduler.NewJob(gocron.CronJob("00 20 07 * * *", true), gocron.NewTask(func() { bootstrapJob("wakeup") }), gocron.WithName("userdef_wakeup-alarm"))
 		if err != nil {
 			log.Errorf("cannot schedule wakeup job: %v", err)
 			return err

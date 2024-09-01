@@ -1,8 +1,8 @@
 package jobs
 
 import (
+	"go-home/cmd/bulb"
 	"go-home/config"
-	"strconv"
 	"time"
 
 	"github.com/go-co-op/gocron/v2"
@@ -11,26 +11,33 @@ import (
 )
 
 func Sunset(scheduler gocron.Scheduler) error {
-	log.Infof("scheduling sunset")
-	// TODO: move this validation to config load
-	lat, err := strconv.ParseFloat(config.ConfigSingleton.Location.Lat, 64)
-	if err != nil {
-		log.Errorf("could not convert latitude %s to float", config.ConfigSingleton.Location.Lat)
-		return nil
-	}
-	lon, err := strconv.ParseFloat(config.ConfigSingleton.Location.Lon, 64)
-	if err != nil {
-		log.Errorf("could not convert longitude %s to float", config.ConfigSingleton.Location.Lon)
-		return nil
+	jobName := "builtin_sunset"
+	for _, job := range scheduler.Jobs() {
+		if job.Name() == jobName {
+			log.Warnf("sunset job already scheduled")
+			return nil
+		}
 	}
 	_, sunset := sunrise.SunriseSunset(
-		lat, lon, time.Now().Year(), time.Now().Month(), time.Now().Day())
-	_, err = scheduler.NewJob(
+		config.ConfigSingleton.Location.Lat, config.ConfigSingleton.Location.Lon, time.Now().Year(), time.Now().Month(), time.Now().Day())
+	log.Infof("scheduling sunset at %v", sunset)
+	_, err := scheduler.NewJob(
 		gocron.OneTimeJob(
 			gocron.OneTimeJobStartDateTime(sunset.Add(time.Minute*-30))),
 		gocron.NewTask(func() {
 			log.Infof("running sunset routine")
-		}))
+			iStart := uint8(25)
+			iStop := uint8(254)
+			for i := iStart; i <= iStop; i++ {
+				err := bulb.TurnBulbOnByName(i, 2700, "", "all")
+				if err != nil {
+					log.Errorf("Can't turn on bulb(s): %v", err)
+				}
+				log.Tracef("iterating sunset routine - %v", i)
+				time.Sleep(time.Second * 5)
+			}
+		}),
+		gocron.WithName(jobName))
 	if err != nil {
 		log.Errorf("could not schedule sunset job")
 		return nil
