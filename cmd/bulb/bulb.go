@@ -91,8 +91,8 @@ func turnBulbOnByIP(dimming int64, temperature uint, color string, bulb net.IP) 
 		log.Errorf(`Unable to convert to json string: %s`, e)
 		err = errors.Join(e, err)
 	}
-	log.Debugf(string(result))
-	log.Infof("Turned lightbulb %s on", bulb.String())
+	log.Tracef(string(result))
+	log.Debugf("Turned lightbulb %s on", bulb.String())
 
 	return err
 }
@@ -161,8 +161,8 @@ func turnBulbOffByIP(bulb net.IP) error {
 		log.Errorf(`Unable to convert to json string: %s`, e)
 		err = errors.Join(e, err)
 	}
-	log.Debugf(string(result))
-	log.Infof("Turned lightbulb %s off", bulb.String())
+	log.Tracef(string(result))
+	log.Debugf("Turned lightbulb %s off", bulb.String())
 
 	return err
 }

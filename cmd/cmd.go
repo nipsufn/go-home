@@ -29,6 +29,7 @@ func NewRootCmd() (cmd *cobra.Command) {
 				log.Fatalf(`Unable to load config: %s`, errA)
 				return errA
 			}
+			log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
 			return nil
 		},
 	}

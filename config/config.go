@@ -7,35 +7,36 @@ import (
 
 	"golang.org/x/exp/maps"
 
-	"github.com/mitchellh/mapstructure"
+	"github.com/go-viper/mapstructure/v2"
 	"github.com/spf13/viper"
 
 	log "github.com/sirupsen/logrus"
 )
 
+// TODO: get rid of mapstructure (public archive)
 type Configuration struct {
 	Bulb struct {
-		Map          map[string]net.IP `mapstructure:"bulbs"`
-		Master       string            `mapstructure:"masterBulb"`
+		Map          map[string]net.IP `yaml:"bulbs"`
+		Master       string            `yaml:"masterBulb"`
 		DefaultState struct {
-			Brightness  uint8  `mapstructure:"brightness"`
-			Temperature uint   `mapstructure:"temperature"`
-			Color       string `mapstructure:"color"`
-			On          bool   `mapstructure:"on"`
-		} `mapstructure:"defaultState"`
-	} `mapstructure:"bulb"`
+			Brightness  uint8  `yaml:"brightness"`
+			Temperature uint   `yaml:"temperature"`
+			Color       string `yaml:"color"`
+			On          bool   `yaml:"on"`
+		} `yaml:"defaultState"`
+	} `yaml:"bulb"`
 	Serve struct {
-		Port uint16 `mapstructure:"port"`
-	} `mapstructure:"serve"`
+		Port uint16 `yaml:"port"`
+	} `yaml:"serve"`
 	Schedule struct {
 		DB struct {
-			Path string `mapstructure:"path"`
-		} `mapstructure:"db"`
-	} `mapstructure:"schedule"`
+			Path string `yaml:"path"`
+		} `yaml:"db"`
+	} `yaml:"schedule"`
 	Location struct {
-		Lat string `mapstructure:"lat"`
-		Lon string `mapstructure:"lon"`
-	} `mapstructure:"location"`
+		Lat float64 `yaml:"lat"`
+		Lon float64 `yaml:"lon"`
+	} `yaml:"location"`
 }
 
 var ConfigSingleton Configuration
