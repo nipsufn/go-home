@@ -3,6 +3,7 @@ module go-home
 go 1.22
 
 require (
+	github.com/fhs/gompd/v2 v2.3.0
 	github.com/go-co-op/gocron/v2 v2.11.0
 	github.com/go-viper/mapstructure/v2 v2.1.0
 	github.com/nathan-osman/go-sunrise v1.1.0

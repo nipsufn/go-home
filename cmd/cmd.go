@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"go-home/cmd/bulb"
+	"go-home/cmd/playback"
 	"go-home/cmd/serve"
 	"go-home/config"
 
@@ -37,6 +38,7 @@ func NewRootCmd() (cmd *cobra.Command) {
 	cmd.PersistentFlags().StringVarP(&logLevel, "loglevel", "l", "info", "Log level [panic|fatal|error|warn|warning|info|debug|trace]")
 	cmd.AddCommand(bulb.NewBulbCmd())
 	cmd.AddCommand(serve.NewServeCmd())
+	cmd.AddCommand(playback.NewPlaybackCmd())
 
 	return cmd
 }
