@@ -28,14 +28,17 @@ func Sunset(scheduler gocron.Scheduler) error {
 			log.Infof("running sunset routine")
 			iStart := uint8(25)
 			iStop := uint8(254)
+			durationMin := 20
+			delaySec := float64(durationMin) * 60 / float64(iStop-iStart)
 			for i := iStart; i <= iStop; i++ {
 				err := bulb.TurnBulbOnByName(i, 2700, "", "all")
 				if err != nil {
 					log.Errorf("Can't turn on bulb(s): %v", err)
 				}
 				log.Tracef("iterating sunset routine - %v", i)
-				time.Sleep(time.Second * 5)
+				time.Sleep(time.Second * time.Duration(delaySec))
 			}
+			log.Infof("finished wakeup routine")
 		}),
 		gocron.WithName(jobName))
 	if err != nil {

@@ -66,10 +66,13 @@ func turnBulbOnByIP(dimming int64, temperature uint, color string, bulb net.IP) 
 
 	payload.Dimming = dimming
 	if temperature != 0 && (temperature < 2700 || temperature > 6500) {
-		log.Errorf(`Temperature out of 2700-6500 range: %d`, temperature)
+		log.Errorf(`temperature out of 2700-6500 range: %d`, temperature)
 		return errors.New(`temperature out of 2700-6500 range`)
 	} else if temperature != 0 {
 		payload.ColorTemp = float64(temperature)
+	} else {
+		log.Errorf(`invalid temperature %v`, temperature)
+		return errors.New(`invalid temperature`)
 	}
 
 	if len(color) > 0 {
@@ -99,17 +102,22 @@ func turnBulbOnByIP(dimming int64, temperature uint, color string, bulb net.IP) 
 
 func TurnBulbOnByName(brightness uint8, temperature uint, color string, bulbs ...string) error {
 	var err error
+	log.Tracef(`in TurnBulbOnByName`)
 	if len(bulbs) == 0 || bulbs[0] == "all" {
 		bulbs = maps.Keys(config.ConfigSingleton.Bulb.Map)
+		log.Tracef(`all bulbs: %v`, bulbs)
 	}
 	for _, bulb := range bulbs {
+		log.Tracef(`in bulb list loop`)
 		if ip, ok := config.ConfigSingleton.Bulb.Map[bulb]; ok {
 			var e error
 			dimming := int64((float64(brightness) / 255) * 100)
 			if 0 < dimming && dimming < 10 {
+				log.Tracef(`clamping brightness`)
 				dimming = 10
 			}
 			if dimming == 0 {
+				log.Tracef(`turning bulb off based on brightness`)
 				e = TurnBulbOffByName(bulb)
 			} else {
 				e = turnBulbOnByIP(dimming, temperature, color, ip)
