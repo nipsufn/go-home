@@ -16,27 +16,27 @@ import (
 // TODO: get rid of mapstructure (public archive)
 type Configuration struct {
 	Bulb struct {
-		Map          map[string]net.IP `yaml:"bulbs"`
-		Master       string            `yaml:"masterBulb"`
+		Map          map[string]net.IP `mapstructure:"bulbs"`
+		Master       string            `mapstructure:"masterBulb"`
 		DefaultState struct {
-			Brightness  uint8  `yaml:"brightness"`
-			Temperature uint   `yaml:"temperature"`
-			Color       string `yaml:"color"`
-			On          bool   `yaml:"on"`
-		} `yaml:"defaultState"`
-	} `yaml:"bulb"`
+			Brightness  uint8  `mapstructure:"brightness"`
+			Temperature uint   `mapstructure:"temperature"`
+			Color       string `mapstructure:"color"`
+			On          bool   `mapstructure:"on"`
+		} `mapstructure:"defaultState"`
+	} `mapstructure:"bulb"`
 	Serve struct {
-		Port uint16 `yaml:"port"`
-	} `yaml:"serve"`
+		Port uint16 `mapstructure:"port"`
+	} `mapstructure:"serve"`
 	Schedule struct {
 		DB struct {
-			Path string `yaml:"path"`
-		} `yaml:"db"`
-	} `yaml:"schedule"`
+			Path string `mapstructure:"path"`
+		} `mapstructure:"db"`
+	} `mapstructure:"schedule"`
 	Location struct {
-		Lat float64 `yaml:"lat"`
-		Lon float64 `yaml:"lon"`
-	} `yaml:"location"`
+		Lat float64 `mapstructure:"lat"`
+		Lon float64 `mapstructure:"lon"`
+	} `mapstructure:"location"`
 }
 
 var ConfigSingleton Configuration
