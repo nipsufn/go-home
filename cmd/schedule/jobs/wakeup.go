@@ -2,6 +2,8 @@ package jobs
 
 import (
 	"go-home/cmd/bulb"
+	"go-home/cmd/playback"
+	"net/url"
 	"time"
 
 	"github.com/go-co-op/gocron/v2"
@@ -10,6 +12,15 @@ import (
 
 func Wakeup(scheduler gocron.Scheduler) error {
 	log.Infof("running wakeup routine")
+
+	go fadeInLights()
+	go fadeInRadio()
+
+	log.Infof("finished wakeup routine")
+	return nil
+}
+
+func fadeInLights() {
 	var i uint8
 	// range from 2700 to 6500
 	kStart := uint(2700)
@@ -27,10 +38,12 @@ func Wakeup(scheduler gocron.Scheduler) error {
 		if err != nil {
 			log.Errorf("Can't turn on bulb(s): %v", err)
 		}
-		log.Tracef("iterating wakeup routine - %v", i)
+		log.Tracef("iterating wakeup routine - iteration %v", i)
 		time.Sleep(time.Second * time.Duration(delaySec))
 	}
+}
 
-	log.Infof("finished wakeup routine")
-	return nil
+func fadeInRadio() {
+	jazz, _ := url.Parse("https://rozhlas.stream/jazz_high.aac")
+	playback.PlayURL(url.URL(*jazz), 15*time.Minute)
 }
