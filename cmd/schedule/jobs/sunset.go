@@ -14,6 +14,7 @@ func Sunset(scheduler gocron.Scheduler) error {
 	jobName := "builtin_sunset"
 	for _, job := range scheduler.Jobs() {
 		if job.Name() == jobName {
+			//# TODO: old jobs are not cleaned up, so this always happens after first success
 			log.Warnf("sunset job already scheduled")
 			return nil
 		}
@@ -35,7 +36,7 @@ func Sunset(scheduler gocron.Scheduler) error {
 				if err != nil {
 					log.Errorf("Can't turn on bulb(s): %v", err)
 				}
-				log.Tracef("iterating sunset routine - %v", i)
+				log.Tracef("iterating sunset routine - iteration %v", i)
 				time.Sleep(time.Second * time.Duration(delaySec))
 			}
 			log.Infof("finished wakeup routine")
