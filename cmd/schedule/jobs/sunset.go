@@ -14,19 +14,21 @@ func Sunset(scheduler gocron.Scheduler) error {
 	jobName := "builtin_sunset"
 	for _, job := range scheduler.Jobs() {
 		if job.Name() == jobName {
-			//# TODO: old jobs are not cleaned up, so this always happens after first success
-			log.Warnf("sunset job already scheduled")
-			return nil
+			err := scheduler.RemoveJob(job.ID())
+			if err != nil {
+				log.WithError(err).Warnf("could not clean up old sunset job")
+			}
+			log.Debug("cleaned up old sunset jobs")
 		}
 	}
 	_, sunset := sunrise.SunriseSunset(
 		config.ConfigSingleton.Location.Lat, config.ConfigSingleton.Location.Lon, time.Now().Year(), time.Now().Month(), time.Now().Day())
-	log.Infof("scheduling sunset at %v", sunset)
+	log.Infof("scheduling sunset job at %v", sunset.Local())
 	_, err := scheduler.NewJob(
 		gocron.OneTimeJob(
-			gocron.OneTimeJobStartDateTime(sunset.Add(time.Minute*-30))),
+			gocron.OneTimeJobStartDateTime(sunset.Local().Add(time.Minute*-30))),
 		gocron.NewTask(func() {
-			log.Infof("running sunset routine")
+			log.Info("running sunset job")
 			iStart := uint8(25)
 			iStop := uint8(254)
 			durationMin := 20
@@ -36,14 +38,14 @@ func Sunset(scheduler gocron.Scheduler) error {
 				if err != nil {
 					log.Errorf("Can't turn on bulb(s): %v", err)
 				}
-				log.Tracef("iterating sunset routine - iteration %v", i)
+				log.Tracef("iterating sunset job - iteration %v", i)
 				time.Sleep(time.Second * time.Duration(delaySec))
 			}
-			log.Infof("finished wakeup routine")
+			log.Info("finished sunset job")
 		}),
 		gocron.WithName(jobName))
 	if err != nil {
-		log.Errorf("could not schedule sunset job")
+		log.WithError(err).Error("could not schedule sunset job")
 		return nil
 	}
 	return nil

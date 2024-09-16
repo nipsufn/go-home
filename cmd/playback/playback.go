@@ -12,6 +12,12 @@ import (
 	"github.com/fhs/gompd/v2/mpd"
 )
 
+const (
+	mpdUri   = "localhost:6600"
+	mpdProto = "tcp"
+	maxVol   = 70
+)
+
 func NewPlaybackCmd() (serveCmd *cobra.Command) {
 	playbackCmd := &cobra.Command{
 		Use:   "playback",
@@ -50,37 +56,31 @@ func newClearCommand() (clearCmd *cobra.Command) {
 }
 
 func PlayURL(playlistUrl url.URL, fadeIn time.Duration) error {
-	client, err := mpd.Dial("tcp", "localhost:6600")
+	client, err := mpd.Dial(mpdProto, mpdUri)
 	if err != nil {
-		log.Warnf("playback.go: func PlayURL: unable to dial MPD daemon")
-		return nil
+		return err
 	}
 	if client.Clear() != nil {
-		log.Warnf("playback.go: func PlayURL: unable to clear MPD playlist")
-		return nil
+		return err
 	}
 	if client.Add(playlistUrl.String()) != nil {
-		log.Warnf("playback.go: func PlayURL: unable to add %v to playlist", playlistUrl)
-		return nil
+		return err
 	}
 	if fadeIn != time.Duration(0) {
 		if client.SetVolume(0) != nil {
-			log.Warnf("playback.go: func PlayURL: unable to set MPD volume")
-			return nil
+			return err
 		}
 	}
 	if client.Play(-1) != nil {
-		log.Warnf("playback.go: func PlayURL: unable to play MPD playlist")
-		return nil
+		return err
 	}
 	if fadeIn != time.Duration(0) {
 		var i int
-		delayDuration := time.Duration(fadeIn / 100.0)
+		delayDuration := time.Duration(fadeIn / maxVol)
 		log.Tracef("delaySec: %v", delayDuration)
-		for i = 0; i <= 100; i++ {
+		for i = 0; i <= maxVol; i++ {
 			if client.SetVolume(i) != nil {
-				log.Warnf("playback.go: func PlayURL: unable to set MPD volume")
-				return nil
+				return err
 			}
 			log.Tracef("iterating play fade-in - iteration %v", i)
 			time.Sleep(delayDuration)
@@ -90,27 +90,24 @@ func PlayURL(playlistUrl url.URL, fadeIn time.Duration) error {
 }
 
 func Clear(fadeOut time.Duration) error {
-	client, err := mpd.Dial("tcp", "localhost:6600")
+	client, err := mpd.Dial(mpdProto, mpdUri)
 	if err != nil {
-		log.Warnf("playback.go: func PlayURL: unable to dial MPD daemon")
-		return nil
+		return err
 	}
 	if fadeOut != time.Duration(0) {
 		var i int
-		delayDuration := time.Duration(fadeOut / 100.0)
+		delayDuration := time.Duration(fadeOut / maxVol)
 		log.Tracef("delaySec: %v", delayDuration)
-		for i = 0; i <= 100; i++ {
-			if client.SetVolume(100-i) != nil {
-				log.Warnf("playback.go: func PlayURL: unable to set MPD volume")
-				return nil
+		for i = 0; i <= maxVol; i++ {
+			if client.SetVolume(maxVol-i) != nil {
+				return err
 			}
 			log.Tracef("iterating clear fade-out - iteration %v", i)
 			time.Sleep(delayDuration)
 		}
 	}
 	if client.Clear() != nil {
-		log.Warnf("playback.go: func PlayURL: unable to clear MPD playlist")
-		return nil
+		return err
 	}
 	return nil
 }
