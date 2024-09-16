@@ -13,7 +13,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// TODO: get rid of mapstructure (public archive)
 type Configuration struct {
 	Bulb struct {
 		Map          map[string]net.IP `mapstructure:"bulbs"`
@@ -62,7 +61,7 @@ func Load(path string) error {
 		),
 	))
 	if err != nil {
-		log.Panicf("fatal error marshalling config file: %v", err)
+		log.WithError(err).Panicf("fatal error marshalling config file")
 		return err
 	}
 	if cfg.Serve.Port < 1024 {
