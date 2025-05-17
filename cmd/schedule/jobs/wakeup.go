@@ -3,6 +3,7 @@ package jobs
 import (
 	"go-home/cmd/bulb"
 	"go-home/cmd/playback"
+	"go-home/config"
 	"net/url"
 	"time"
 
@@ -44,6 +45,7 @@ func fadeInLights() {
 }
 
 func fadeInRadio() {
-	jazz, _ := url.Parse("https://rozhlas.stream/jazz_high.aac")
+	station := config.ConfigSingleton.Radio.DefaultStation
+	jazz := config.ConfigSingleton.Radio.Stations[station]
 	playback.PlayURL(url.URL(*jazz), 15*time.Minute)
 }

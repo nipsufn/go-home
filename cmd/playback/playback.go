@@ -5,6 +5,8 @@ import (
 	"net/url"
 	"time"
 
+	"go-home/config"
+
 	"github.com/spf13/cobra"
 
 	log "github.com/sirupsen/logrus"
@@ -12,10 +14,10 @@ import (
 	"github.com/fhs/gompd/v2/mpd"
 )
 
-const (
-	mpdUri   = "localhost:6600"
-	mpdProto = "tcp"
-	maxVol   = 70
+var (
+	mpdUri   = config.ConfigSingleton.Playback.MpdUrl.String()
+	mpdProto = config.ConfigSingleton.Playback.MpdProto
+	maxVol   = config.ConfigSingleton.Playback.MaxVolume
 )
 
 func NewPlaybackCmd() (serveCmd *cobra.Command) {
@@ -76,9 +78,9 @@ func PlayURL(playlistUrl url.URL, fadeIn time.Duration) error {
 	}
 	if fadeIn != time.Duration(0) {
 		var i int
-		delayDuration := time.Duration(fadeIn / maxVol)
+		delayDuration := time.Duration(fadeIn / time.Duration(maxVol))
 		log.Tracef("delaySec: %v", delayDuration)
-		for i = 0; i <= maxVol; i++ {
+		for i = 0; i <= int(maxVol); i++ {
 			if client.SetVolume(i) != nil {
 				return err
 			}
@@ -96,10 +98,10 @@ func Clear(fadeOut time.Duration) error {
 	}
 	if fadeOut != time.Duration(0) {
 		var i int
-		delayDuration := time.Duration(fadeOut / maxVol)
+		delayDuration := time.Duration(fadeOut / time.Duration(maxVol))
 		log.Tracef("delaySec: %v", delayDuration)
-		for i = 0; i <= maxVol; i++ {
-			if client.SetVolume(maxVol-i) != nil {
+		for i = 0; i <= int(maxVol); i++ {
+			if client.SetVolume(int(maxVol)-i) != nil {
 				return err
 			}
 			log.Tracef("iterating clear fade-out - iteration %v", i)
