@@ -8,7 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func HandleBulbApiRequest(w http.ResponseWriter, r *http.Request) {
+func handleBulbApiRequest(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		log.Tracef("Processing API call: GET")

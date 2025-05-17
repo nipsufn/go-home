@@ -70,12 +70,7 @@ func turnBulbOnByIP(dimming int64, temperature uint, color string, bulb net.IP) 
 		return errors.New(`temperature out of 2700-6500 range`)
 	} else if temperature != 0 {
 		payload.ColorTemp = float64(temperature)
-	} else {
-		log.Errorf(`invalid temperature %v`, temperature)
-		return errors.New(`invalid temperature`)
-	}
-
-	if len(color) > 0 {
+	} else if len(color) > 0 {
 		if _, err = fmt.Sscanf(color, "#%02x%02x%02x", &r, &g, &b); err != nil {
 			log.Errorf(`Color is not in #RRGGBB format: %s`, color)
 			return errors.Join(errors.New(`color is not in #RRGGBB format`), err)
@@ -83,6 +78,9 @@ func turnBulbOnByIP(dimming int64, temperature uint, color string, bulb net.IP) 
 		payload.R = float64(r)
 		payload.G = float64(g)
 		payload.B = float64(b)
+	} else {
+		log.Errorf(`invalid temperature %v`, temperature)
+		return errors.New(`invalid temperature`)
 	}
 
 	var e error
@@ -100,6 +98,31 @@ func turnBulbOnByIP(dimming int64, temperature uint, color string, bulb net.IP) 
 	return err
 }
 
+func turnBulbOnByNameInternal(brightness uint8, temperature uint, color string, bulb string, ip net.IP, err chan<- error) {
+	var e error
+	// dimming < 10
+	if brightness <= 25 {
+		err <- errors.New("brightness too low")
+		return
+	}
+	dimming := int64((float64(brightness) / 255) * 100)
+
+	e = turnBulbOnByIP(dimming, temperature, color, ip)
+	if e == nil && bulb != config.ConfigSingleton.Bulb.Master {
+		config.StateSingleton.Set(bulb, config.BulbState{
+			Brightness:  brightness,
+			Temperature: temperature,
+			Color:       color,
+			On:          (dimming > 0)})
+	} else if e == nil {
+		config.StateSingleton.SetBrightness(bulb, brightness)
+		config.StateSingleton.SetTemperature(bulb, temperature)
+		config.StateSingleton.SetColor(bulb, color)
+	}
+
+	err <- e
+}
+
 func TurnBulbOnByName(brightness uint8, temperature uint, color string, bulbs ...string) error {
 	var err error
 	log.Tracef(`in TurnBulbOnByName`)
@@ -107,34 +130,15 @@ func TurnBulbOnByName(brightness uint8, temperature uint, color string, bulbs ..
 		bulbs = maps.Keys(config.ConfigSingleton.Bulb.Map)
 		log.Tracef(`all bulbs: %v`, bulbs)
 	}
+	e := make(chan error, len(bulbs))
 	for _, bulb := range bulbs {
 		log.Tracef(`in bulb list loop`)
 		if ip, ok := config.ConfigSingleton.Bulb.Map[bulb]; ok {
-			var e error
-			dimming := int64((float64(brightness) / 255) * 100)
-			if 0 < dimming && dimming < 10 {
-				log.Tracef(`clamping brightness`)
-				dimming = 10
-			}
-			if dimming == 0 {
-				log.Tracef(`turning bulb off based on brightness`)
-				e = TurnBulbOffByName(bulb)
-			} else {
-				e = turnBulbOnByIP(dimming, temperature, color, ip)
-				if e == nil && bulb != config.ConfigSingleton.Bulb.Master {
-					config.StateSingleton.Set(bulb, config.BulbState{
-						Brightness:  brightness,
-						Temperature: temperature,
-						Color:       color,
-						On:          (dimming > 0)})
-				} else if e == nil {
-					config.StateSingleton.SetBrightness(bulb, brightness)
-					config.StateSingleton.SetTemperature(bulb, temperature)
-					config.StateSingleton.SetColor(bulb, color)
-				}
-			}
-			err = errors.Join(e, err)
+			go turnBulbOnByNameInternal(brightness, temperature, color, bulb, ip, e)
 		}
+	}
+	for i := 0; i < len(bulbs); i++ {
+		err = errors.Join(err, <-e)
 	}
 
 	return err

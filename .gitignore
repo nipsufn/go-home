@@ -1,3 +1,4 @@
 __debug_bin
 go-home
 sqlite.db
+resources/config.yaml

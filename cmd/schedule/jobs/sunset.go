@@ -12,15 +12,18 @@ import (
 
 func Sunset(scheduler gocron.Scheduler) error {
 	jobName := "builtin_sunset"
-	for _, job := range scheduler.Jobs() {
-		if job.Name() == jobName {
-			err := scheduler.RemoveJob(job.ID())
-			if err != nil {
-				log.WithError(err).Warnf("could not clean up old sunset job")
-			}
-			log.Debug("cleaned up old sunset jobs")
-		}
-	}
+	scheduler.RemoveByTags(jobName)
+	// TODO: implement RemoveByName in gocron
+	// or commit to using tags
+	// for _, job := range scheduler.Jobs() {
+	// 	if job.Name() == jobName {
+	// 		err := scheduler.RemoveJob(job.ID())
+	// 		if err != nil {
+	// 			log.WithError(err).Warnf("could not clean up old sunset job")
+	// 		}
+	// 		log.Debug("cleaned up old sunset jobs")
+	// 	}
+	// }
 	_, sunset := sunrise.SunriseSunset(
 		config.ConfigSingleton.Location.Lat, config.ConfigSingleton.Location.Lon, time.Now().Year(), time.Now().Month(), time.Now().Day())
 	log.Infof("scheduling sunset job at %v", sunset.Local())
@@ -43,7 +46,8 @@ func Sunset(scheduler gocron.Scheduler) error {
 			}
 			log.Info("finished sunset job")
 		}),
-		gocron.WithName(jobName))
+		gocron.WithName(jobName),
+		gocron.WithTags(jobName))
 	if err != nil {
 		log.WithError(err).Error("could not schedule sunset job")
 		return nil

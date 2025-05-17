@@ -2,6 +2,7 @@ package config
 
 import (
 	"net"
+	"net/url"
 	"path/filepath"
 	"strings"
 
@@ -27,6 +28,16 @@ type Configuration struct {
 	Serve struct {
 		Port uint16 `mapstructure:"port"`
 	} `mapstructure:"serve"`
+	Playback struct {
+		MaxVolume uint8    `mapstructure:"maxVolume"`
+		MpdProto  string   `mapstructure:"mpdProto"`
+		MpdUrl    *url.URL `mapstructure:"mpdUrl"`
+	} `mapstructure:"playback"`
+	Radio struct {
+		FadeDelaySec   uint                `mapstructure:"fadeDelaySec"`
+		DefaultStation string              `mapstructure:"defaultStation"`
+		Stations       map[string]*url.URL `mapstructure:"stations"`
+	} `mapstructure:"radio"`
 	Schedule struct {
 		DB struct {
 			Path string `mapstructure:"path"`
@@ -58,6 +69,8 @@ func Load(path string) error {
 			// Appended by the two default functions
 			mapstructure.StringToTimeDurationHookFunc(),
 			mapstructure.StringToSliceHookFunc(","),
+			// Function to support *url.URL
+			mapstructure.StringToURLHookFunc(),
 		),
 	))
 	if err != nil {
@@ -67,6 +80,13 @@ func Load(path string) error {
 	if cfg.Serve.Port < 1024 {
 		log.Panicf("config field `serve.port` must > 1024: %d", cfg.Serve.Port)
 	}
+	if cfg.Radio.DefaultStation == "" {
+		log.Panicf("config field `radio.defaultStation` must be set", cfg.Radio.DefaultStation)
+	}
+	if _, ok := cfg.Radio.Stations[cfg.Radio.DefaultStation]; !ok {
+		log.Panicf("config field `radio.defaultStation`: %q not found in stations", cfg.Radio.DefaultStation)
+	}
+
 	ConfigSingleton = cfg
 	var absPath string
 	if absPath, err = filepath.Abs(path); err != nil {
