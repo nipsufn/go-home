@@ -54,10 +54,14 @@ func handleBulbApiRequest(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusBadRequest)
 				return
 			}
-			if temperature, err = strconv.Atoi(r.URL.Query().Get("temperature")); err != nil {
-				log.Errorf("Processing API call: cannot cast temperature as int")
-				w.WriteHeader(http.StatusBadRequest)
-				return
+			if len(color) == 0 {
+				if temperature, err = strconv.Atoi(r.URL.Query().Get("temperature")); err != nil {
+					log.Errorf("Processing API call: cannot cast temperature as int")
+					w.WriteHeader(http.StatusBadRequest)
+					return
+				}
+			} else {
+				temperature = 0
 			}
 			bulb.TurnBulbOnByName(uint8(brightness), uint(temperature), color, r.URL.Query()["name"]...)
 			return

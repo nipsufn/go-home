@@ -71,9 +71,10 @@ func turnBulbOnByIP(dimming int64, temperature uint, color string, bulb net.IP) 
 	} else if temperature != 0 {
 		payload.ColorTemp = float64(temperature)
 	} else if len(color) > 0 {
-		if _, err = fmt.Sscanf(color, "#%02x%02x%02x", &r, &g, &b); err != nil {
-			log.Errorf(`Color is not in #RRGGBB format: %s`, color)
-			return errors.Join(errors.New(`color is not in #RRGGBB format`), err)
+		var err error
+		if _, err = fmt.Sscanf(color, "%02x%02x%02x", &r, &g, &b); err != nil {
+			log.Errorf(`Color is not in RRGGBB format: %s`, color)
+			return errors.Join(errors.New(`color is not in RRGGBB format`), err)
 		}
 		payload.R = float64(r)
 		payload.G = float64(g)
@@ -92,7 +93,7 @@ func turnBulbOnByIP(dimming int64, temperature uint, color string, bulb net.IP) 
 		log.Errorf(`Unable to convert to json string: %s`, e)
 		err = errors.Join(e, err)
 	}
-	log.Tracef(string(result))
+	log.Tracef("%s", string(result))
 	log.Debugf("Turned lightbulb %s on", bulb.String())
 
 	return err
@@ -173,7 +174,7 @@ func turnBulbOffByIP(bulb net.IP) error {
 		log.Errorf(`Unable to convert to json string: %s`, e)
 		err = errors.Join(e, err)
 	}
-	log.Tracef(string(result))
+	log.Tracef("%s", string(result))
 	log.Debugf("Turned lightbulb %s off", bulb.String())
 
 	return err
