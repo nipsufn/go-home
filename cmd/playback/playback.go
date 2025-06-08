@@ -2,6 +2,8 @@
 package playback
 
 import (
+	"errors"
+	"fmt"
 	"net/url"
 	"time"
 
@@ -14,11 +16,12 @@ import (
 	"github.com/fhs/gompd/v2/mpd"
 )
 
-var (
-	mpdUri   = config.ConfigSingleton.Playback.MpdUrl.String()
-	mpdProto = config.ConfigSingleton.Playback.MpdProto
-	maxVol   = config.ConfigSingleton.Playback.MaxVolume
-)
+// needs work on init to be accessible at this point
+// var (
+// 	mpdUri   = config.ConfigSingleton.Playback.MpdUrl
+// 	mpdProto = config.ConfigSingleton.Playback.MpdProto
+// 	maxVol   = config.ConfigSingleton.Playback.MaxVolume
+// )
 
 func NewPlaybackCmd() (serveCmd *cobra.Command) {
 	playbackCmd := &cobra.Command{
@@ -58,15 +61,18 @@ func newClearCommand() (clearCmd *cobra.Command) {
 }
 
 func PlayURL(playlistUrl url.URL, fadeIn time.Duration) error {
+	mpdUri := config.ConfigSingleton.Playback.MpdUrl
+	mpdProto := config.ConfigSingleton.Playback.MpdProto
+	maxVol := config.ConfigSingleton.Playback.MaxVolume
 	client, err := mpd.Dial(mpdProto, mpdUri)
 	if err != nil {
-		return err
+		return errors.Join(errors.New(fmt.Sprintf(`cannot connect to mpd at %s %s`, mpdProto, mpdUri)), err)
 	}
 	if client.Clear() != nil {
-		return err
+		return errors.Join(errors.New(`cannot clear`), err)
 	}
 	if client.Add(playlistUrl.String()) != nil {
-		return err
+		return errors.Join(errors.New(`cannot add to playlist`), err)
 	}
 	if fadeIn != time.Duration(0) {
 		if client.SetVolume(0) != nil {
@@ -74,7 +80,7 @@ func PlayURL(playlistUrl url.URL, fadeIn time.Duration) error {
 		}
 	}
 	if client.Play(-1) != nil {
-		return err
+		return errors.Join(errors.New(`cannot play`), err)
 	}
 	if fadeIn != time.Duration(0) {
 		var i int
@@ -82,7 +88,7 @@ func PlayURL(playlistUrl url.URL, fadeIn time.Duration) error {
 		log.Tracef("delaySec: %v", delayDuration)
 		for i = 0; i <= int(maxVol); i++ {
 			if client.SetVolume(i) != nil {
-				return err
+				return errors.Join(errors.New(`cannot set volume`), err)
 			}
 			log.Tracef("iterating play fade-in - iteration %v", i)
 			time.Sleep(delayDuration)
@@ -92,9 +98,12 @@ func PlayURL(playlistUrl url.URL, fadeIn time.Duration) error {
 }
 
 func Clear(fadeOut time.Duration) error {
+	mpdUri := config.ConfigSingleton.Playback.MpdUrl
+	mpdProto := config.ConfigSingleton.Playback.MpdProto
+	maxVol := config.ConfigSingleton.Playback.MaxVolume
 	client, err := mpd.Dial(mpdProto, mpdUri)
 	if err != nil {
-		return err
+		return errors.Join(errors.New(fmt.Sprintf(`cannot connect to mpd at %s %s`, mpdProto, mpdUri)), err)
 	}
 	if fadeOut != time.Duration(0) {
 		var i int
@@ -102,13 +111,16 @@ func Clear(fadeOut time.Duration) error {
 		log.Tracef("delaySec: %v", delayDuration)
 		for i = 0; i <= int(maxVol); i++ {
 			if client.SetVolume(int(maxVol)-i) != nil {
-				return err
+				return errors.Join(errors.New(`cannot set volume`), err)
 			}
 			log.Tracef("iterating clear fade-out - iteration %v", i)
 			time.Sleep(delayDuration)
 		}
 	}
 	if client.Clear() != nil {
+		return errors.Join(errors.New(`cannot clear`), err)
+	}
+	if client.SetVolume(int(maxVol)) != nil {
 		return err
 	}
 	return nil

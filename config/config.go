@@ -29,9 +29,9 @@ type Configuration struct {
 		Port uint16 `mapstructure:"port"`
 	} `mapstructure:"serve"`
 	Playback struct {
-		MaxVolume uint8    `mapstructure:"maxVolume"`
-		MpdProto  string   `mapstructure:"mpdProto"`
-		MpdUrl    *url.URL `mapstructure:"mpdUrl"`
+		MaxVolume uint8  `mapstructure:"maxVolume"`
+		MpdProto  string `mapstructure:"mpdProto"`
+		MpdUrl    string `mapstructure:"mpdUrl"`
 	} `mapstructure:"playback"`
 	Radio struct {
 		FadeDelaySec   uint                `mapstructure:"fadeDelaySec"`
@@ -81,7 +81,7 @@ func Load(path string) error {
 		log.Panicf("config field `serve.port` must > 1024: %d", cfg.Serve.Port)
 	}
 	if cfg.Radio.DefaultStation == "" {
-		log.Panicf("config field `radio.defaultStation` must be set", cfg.Radio.DefaultStation)
+		log.Panicf("config field `radio.defaultStation` must be set")
 	}
 	if _, ok := cfg.Radio.Stations[cfg.Radio.DefaultStation]; !ok {
 		log.Panicf("config field `radio.defaultStation`: %q not found in stations", cfg.Radio.DefaultStation)

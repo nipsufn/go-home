@@ -44,7 +44,7 @@ var (
 		},
 		{
 			Name:     "userdef_wakeup-alarm",
-			Schedule: "00 45 12 * * *",
+			Schedule: "00 00 07 * * *",
 			OpName:   "wakeup",
 		},
 	}
@@ -71,12 +71,14 @@ func doesJobWithNameExist(name string) bool {
 	return false
 }
 
-func interruptHandler() {
+func interruptHandler(scopedScheduler gocron.Scheduler, scopedDb *gorm.DB) {
 	signal := <-signals
 	log.Infof("caught signal %v", signal)
+	log.Tracef("internalDisableDb: %v", internalDisableDb)
 	if !internalDisableDb {
 		var jobs []Job
-		for _, job := range scheduler.Jobs() {
+		for _, job := range scopedScheduler.Jobs() {
+			log.Tracef("in jobs loop")
 			if !strings.HasPrefix(job.Name(), "builtin_") {
 				var schedule, opname string
 				for _, tag := range job.Tags() {
@@ -90,13 +92,14 @@ func interruptHandler() {
 				jobs = append(jobs, Job{Name: job.Name(), Schedule: schedule, OpName: opname})
 			}
 		}
-		tx := db.Clauses(onConflictClause).Create(jobs)
+		log.Tracef("job list built")
+		tx := scopedDb.Clauses(onConflictClause).Create(jobs)
 		if tx.Error != nil {
 			log.WithError(tx.Error).Fatalf("could not persist jobs")
 		}
 		log.Infof("jobs have been persisted")
 	}
-	err := scheduler.Shutdown()
+	err := scopedScheduler.Shutdown()
 	if err != nil {
 		log.WithError(err).Error("could not gracefully stop scheduler")
 	}
@@ -105,8 +108,10 @@ func interruptHandler() {
 
 func RestartSchedules(scheduler gocron.Scheduler) error {
 	var jobs []Job
+	var db *gorm.DB
 	// load jobs from DB
 	if !internalDisableDb {
+		log.Tracef("loading db")
 		db, err := gorm.Open(sqlite.Open(config.ConfigSingleton.Schedule.DB.Path), &gorm.Config{})
 		if err != nil {
 			log.Errorf("cannot open db: %v", err)
@@ -145,9 +150,10 @@ func RestartSchedules(scheduler gocron.Scheduler) error {
 	signals = make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
 
-	go interruptHandler()
+	go interruptHandler(scheduler, db)
 	return nil
 }
+
 func StartSchedules(schedulerChan chan gocron.Scheduler, disableDb bool) error {
 	internalDisableDb = disableDb
 	// TODO: Timezone in config, preferably UNIX style (Europe/Berlin)

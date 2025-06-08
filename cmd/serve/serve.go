@@ -14,7 +14,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var disableDb = true
+var disableDb = false
 
 func NewServeCmd() (serveCmd *cobra.Command) {
 	serveCmd = &cobra.Command{
@@ -24,7 +24,7 @@ func NewServeCmd() (serveCmd *cobra.Command) {
 			return listenAndServe()
 		},
 	}
-	serveCmd.PersistentFlags().BoolVar(&disableDb, "disableDb", true, "Disable state load from SQLite")
+	serveCmd.PersistentFlags().BoolVar(&disableDb, "disableDb", false, "Disable state load from SQLite")
 	return serveCmd
 }
 

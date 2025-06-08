@@ -25,8 +25,11 @@ func handleRadioApiRequest(w http.ResponseWriter, r *http.Request) {
 			if station != "" {
 				station = config.ConfigSingleton.Radio.DefaultStation
 			}
-			jazz := config.ConfigSingleton.Radio.Stations[station]
-			playback.PlayURL(url.URL(*jazz), time.Duration(config.ConfigSingleton.Radio.FadeDelaySec)*time.Second)
+			stationUrl := config.ConfigSingleton.Radio.Stations[station]
+			log.Tracef("Playing radio %s: %s", station, stationUrl)
+			if err := playback.PlayURL(url.URL(*stationUrl), time.Duration(config.ConfigSingleton.Radio.FadeDelaySec)*time.Second); err != nil {
+				log.Errorf("Playback error: %v", err)
+			}
 			return
 		case "off":
 			playback.Clear(time.Duration(config.ConfigSingleton.Radio.FadeDelaySec) * time.Second)

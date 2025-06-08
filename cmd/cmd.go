@@ -31,6 +31,7 @@ func NewRootCmd() (cmd *cobra.Command) {
 				return errA
 			}
 			log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
+			log.SetReportCaller(true)
 			return nil
 		},
 	}
