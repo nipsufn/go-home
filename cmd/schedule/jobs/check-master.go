@@ -13,7 +13,7 @@ func PingMasterBulbRoutine() {
 	log.Debugf("Master bulb loop starting")
 	for {
 		connection.TimeoutMs = 500
-		err := bulb.GetBulbStateByName(config.ConfigSingleton.Bulb.Master)
+		_, err := bulb.GetBulbStateByName(config.ConfigSingleton.Bulb.Master)
 
 		if err != nil && !config.StateSingleton.GetMasterState() {
 			log.Tracef("Master bulb already off")

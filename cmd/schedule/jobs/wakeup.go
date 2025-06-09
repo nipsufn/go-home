@@ -8,20 +8,25 @@ import (
 	"time"
 
 	"github.com/go-co-op/gocron/v2"
+	"github.com/nathan-osman/go-sunrise"
 	log "github.com/sirupsen/logrus"
 )
 
 func Wakeup(scheduler gocron.Scheduler) error {
 	log.Infof("running wakeup routine")
-
-	go fadeInLights()
+	durationMin := 20
+	sunrise, _ := sunrise.SunriseSunset(
+		config.ConfigSingleton.Location.Lat, config.ConfigSingleton.Location.Lon, time.Now().Year(), time.Now().Month(), time.Now().Day())
+	if time.Now().Before((sunrise)) {
+		go fadeInLights(uint8(durationMin))
+	}
 	go fadeInRadio()
 
 	log.Infof("finished wakeup routine")
 	return nil
 }
 
-func fadeInLights() {
+func fadeInLights(durationMin uint8) {
 	var i uint8
 	// range from 2700 to 6500
 	kStart := uint(2700)
@@ -31,7 +36,6 @@ func fadeInLights() {
 	iStop := uint8(254)
 	a := float64(kStop-kStart) / float64(iStop-iStart)
 	b := float64(iStart) * -a
-	durationMin := 20
 	delaySec := float64(durationMin) * 60 / float64(iStop-iStart)
 	log.Tracef("delaySec: %v", delaySec)
 	for i = iStart; i <= iStop; i++ {
