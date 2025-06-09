@@ -31,6 +31,19 @@ func Sunset(scheduler gocron.Scheduler) error {
 		gocron.OneTimeJob(
 			gocron.OneTimeJobStartDateTime(sunset.Local().Add(time.Minute*-30))),
 		gocron.NewTask(func() {
+			//check if any bulb is already on
+			//if so do nothing, do not override user
+			r, e := bulb.GetBulbStateByName()
+			if e != nil {
+				log.Errorf("%v", e)
+				return
+			}
+			for k, v := range r {
+				if v.Result.State {
+					log.Infof("bulb %s already on, skipping sunset procedure", k)
+					return
+				}
+			}
 			log.Info("running sunset job")
 			iStart := uint8(25)
 			iStop := uint8(254)

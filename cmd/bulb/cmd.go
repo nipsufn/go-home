@@ -1,6 +1,7 @@
 package bulb
 
 import (
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -21,7 +22,9 @@ func newListCmd() (listCmd *cobra.Command) {
 		Use:   "list",
 		Short: "Turn lightbulb(s) on",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return GetBulbStateByName(args...)
+			r, e := GetBulbStateByName(args...)
+			log.Infof("%v", r)
+			return e
 		},
 	}
 	return listCmd

@@ -15,7 +15,7 @@ import (
 	"go-home/config"
 )
 
-func getBulbStateByIP(bulb net.IP) error {
+func getBulbStateByIP(bulb net.IP) (*wizzModels.ResponsePayload, error) {
 	var err error
 	var (
 		response *wizzModels.ResponsePayload
@@ -26,30 +26,31 @@ func getBulbStateByIP(bulb net.IP) error {
 		log.Errorf(`Unable to read response: %s`, e)
 		err = errors.Join(e, err)
 	}
-	if result, e = json.Marshal(response); e != nil {
-		log.Errorf(`Unable to convert to json string: %s`, e)
-		err = errors.Join(e, err)
-	}
 	if err == nil {
-		log.Debugf(`Read bulb state: %s`, string(result))
+		log.Debugf(`Read bulb state: %v`, result)
 	}
 
-	return err
+	return response, err
 }
 
-func GetBulbStateByName(bulbs ...string) error {
+func GetBulbStateByName(bulbs ...string) (map[string]*wizzModels.ResponsePayload, error) {
 	var err error
+	response := make(map[string]*wizzModels.ResponsePayload)
 	if len(bulbs) == 0 || bulbs[0] == "all" {
 		bulbs = maps.Keys(config.ConfigSingleton.Bulb.Map)
 	}
 	for _, bulb := range bulbs {
 		if ip, ok := config.ConfigSingleton.Bulb.Map[bulb]; ok {
-			e := getBulbStateByIP(ip)
-			err = errors.Join(e, err)
+			r, e := getBulbStateByIP(ip)
+			if e != nil {
+				err = errors.Join(e, err)
+				continue
+			}
+			response[bulb] = r
 		}
 	}
 
-	return err
+	return response, err
 }
 
 func turnBulbOnByIP(dimming int64, temperature uint, color string, bulb net.IP) error {
