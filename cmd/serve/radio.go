@@ -22,7 +22,7 @@ func handleRadioApiRequest(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Query().Get("op") {
 		case "on":
 			station := r.URL.Query().Get("station")
-			if station != "" {
+			if station == "" {
 				station = config.ConfigSingleton.Radio.DefaultStation
 			}
 			stationUrl := config.ConfigSingleton.Radio.Stations[station]

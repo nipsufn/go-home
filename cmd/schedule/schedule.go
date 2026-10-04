@@ -112,7 +112,8 @@ func RestartSchedules(scheduler gocron.Scheduler) error {
 	// load jobs from DB
 	if !internalDisableDb {
 		log.Tracef("loading db")
-		db, err := gorm.Open(sqlite.Open(config.ConfigSingleton.Schedule.DB.Path), &gorm.Config{})
+		var err error
+		db, err = gorm.Open(sqlite.Open(config.ConfigSingleton.Schedule.DB.Path), &gorm.Config{})
 		if err != nil {
 			log.Errorf("cannot open db: %v", err)
 			return err

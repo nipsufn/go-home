@@ -86,8 +86,8 @@ func (s *State) GetMasterState() bool {
 }
 
 func (s *State) Init() {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	s.bulbs = make(map[string]BulbState)
 }
