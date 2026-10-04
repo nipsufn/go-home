@@ -19,7 +19,6 @@ func getBulbStateByIP(bulb net.IP) (*wizzModels.ResponsePayload, error) {
 	var err error
 	var (
 		response *wizzModels.ResponsePayload
-		result   []byte
 		e        error
 	)
 	if response, e = wizz.GetState(bulb.String()); e != nil {
@@ -27,7 +26,7 @@ func getBulbStateByIP(bulb net.IP) (*wizzModels.ResponsePayload, error) {
 		err = errors.Join(e, err)
 	}
 	if err == nil {
-		log.Debugf(`Read bulb state: %v`, result)
+		log.Debugf(`Read bulb state: %v`, response)
 	}
 
 	return response, err
@@ -47,6 +46,8 @@ func GetBulbStateByName(bulbs ...string) (map[string]*wizzModels.ResponsePayload
 				continue
 			}
 			response[bulb] = r
+		} else {
+			err = errors.Join(err, fmt.Errorf("unknown bulb %q", bulb))
 		}
 	}
 
@@ -103,7 +104,7 @@ func turnBulbOnByIP(dimming int64, temperature uint, color string, bulb net.IP) 
 func turnBulbOnByNameInternal(brightness uint8, temperature uint, color string, bulb string, ip net.IP, err chan<- error) {
 	var e error
 	// dimming < 10
-	if brightness <= 25 {
+	if brightness < 25 {
 		err <- errors.New("brightness too low")
 		return
 	}
@@ -127,22 +128,25 @@ func turnBulbOnByNameInternal(brightness uint8, temperature uint, color string, 
 
 func TurnBulbOnByName(brightness uint8, temperature uint, color string, bulbs ...string) error {
 	var err error
-	log.Tracef(`in TurnBulbOnByName`)
 	if len(bulbs) == 0 || bulbs[0] == "all" {
 		bulbs = maps.Keys(config.ConfigSingleton.Bulb.Map)
-		log.Tracef(`all bulbs: %v`, bulbs)
 	}
 	e := make(chan error, len(bulbs))
+	started := 0
 	for _, bulb := range bulbs {
+
 		log.Tracef(`in bulb list loop`)
-		if ip, ok := config.ConfigSingleton.Bulb.Map[bulb]; ok {
-			go turnBulbOnByNameInternal(brightness, temperature, color, bulb, ip, e)
+		ip, ok := config.ConfigSingleton.Bulb.Map[bulb]
+		if !ok {
+			err = errors.Join(err, fmt.Errorf("unknown bulb %q", bulb))
+			continue
 		}
+		started++
+		go turnBulbOnByNameInternal(brightness, temperature, color, bulb, ip, e)
 	}
-	for i := 0; i < len(bulbs); i++ {
+	for i := 0; i < started; i++ {
 		err = errors.Join(err, <-e)
 	}
-
 	return err
 }
 
@@ -187,7 +191,7 @@ func TurnBulbOffByName(bulbs ...string) error {
 		log.Debugf("Select all bulbs to turn off")
 		bulbs = maps.Keys(config.ConfigSingleton.Bulb.Map)
 	}
-	log.Debugf("Turned lightbulb %v off", bulbs)
+	log.Debugf("Turning lightbulb(s) %v off", bulbs)
 	for _, bulb := range bulbs {
 		if ip, ok := config.ConfigSingleton.Bulb.Map[bulb]; ok {
 			e := turnBulbOffByIP(ip)
@@ -195,6 +199,8 @@ func TurnBulbOffByName(bulbs ...string) error {
 				config.StateSingleton.SetOn(bulb, false)
 			}
 			err = errors.Join(e, err)
+		} else {
+			err = errors.Join(err, fmt.Errorf("unknown bulb %q", bulb))
 		}
 	}
 

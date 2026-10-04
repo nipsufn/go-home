@@ -25,10 +25,15 @@ func handleRadioApiRequest(w http.ResponseWriter, r *http.Request) {
 			if station == "" {
 				station = config.ConfigSingleton.Radio.DefaultStation
 			}
-			stationUrl := config.ConfigSingleton.Radio.Stations[station]
-			log.Tracef("Playing radio %s: %s", station, stationUrl)
-			if err := playback.PlayURL(url.URL(*stationUrl), time.Duration(config.ConfigSingleton.Radio.FadeDelaySec)*time.Second); err != nil {
-				log.Errorf("Playback error: %v", err)
+			if stationUrl, ok := config.ConfigSingleton.Radio.Stations[station]; ok {
+				log.Tracef("Playing radio %s: %s", station, stationUrl)
+				if err := playback.PlayURL(url.URL(*stationUrl), time.Duration(config.ConfigSingleton.Radio.FadeDelaySec)*time.Second); err != nil {
+					log.Errorf("Playback error: %v", err)
+				}
+			} else {
+				log.Errorf("Station %s not found", station)
+				w.Write([]byte("Station not found"))
+				w.WriteHeader(http.StatusNotFound)
 			}
 			return
 		case "off":

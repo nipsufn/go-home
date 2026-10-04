@@ -16,46 +16,46 @@ func handleBulbApiRequest(w http.ResponseWriter, r *http.Request) {
 
 	case http.MethodPost:
 		log.Tracef("Processing API call: POST")
-
-		log.Tracef("3: %v", r.URL.Query()["name"])
-		if len(r.URL.Query()["name"]) == 0 {
-			r.URL.Query()["name"] = append(r.URL.Query()["name"], "all")
+		q := r.URL.Query()
+		log.Tracef("3: %v", q["name"])
+		if len(q["name"]) == 0 {
+			q["name"] = append(q["name"], "all")
 		}
 
-		log.Tracef("4: %v", r.URL.Query()["name"])
-		if len(r.URL.Query()["op"]) != 1 {
+		log.Tracef("4: %v", q["name"])
+		if len(q["op"]) != 1 {
 			log.Errorf("Processing API call: parameter `op` duplicated")
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
-		switch r.URL.Query().Get("op") {
+		switch q.Get("op") {
 		case "off":
-			log.Tracef("Processing API call: op off on bulbs %v", r.URL.Query()["name"])
-			bulb.TurnBulbOffByName(r.URL.Query()["name"]...)
+			log.Tracef("Processing API call: op off on bulbs %v", q["name"])
+			bulb.TurnBulbOffByName(q["name"]...)
 			w.WriteHeader(http.StatusOK)
 			return
 		case "on":
-			log.Tracef("Processing API call: op on on bulbs %v", r.URL.Query()["name"])
-			if len(r.URL.Query()["brightness"]) != 1 && (len(r.URL.Query()["temperature"])+len(r.URL.Query()["colour"])+len(r.URL.Query()["color"]) != 1) {
+			log.Tracef("Processing API call: op on on bulbs %v", q["name"])
+			if len(q["brightness"]) != 1 || (len(q["temperature"])+len(q["colour"])+len(q["color"]) != 1) {
 				log.Errorf("Processing API call: params invalid")
 				w.WriteHeader(http.StatusBadRequest)
 				return
 			}
 			var (
-				brightness  int
+				brightness  uint64
 				temperature int
 				color       string
 				err         error
 			)
-			color = r.URL.Query().Get("colour") + r.URL.Query().Get("color")
-			if brightness, err = strconv.Atoi(r.URL.Query().Get("brightness")); err != nil {
-				log.Errorf("Processing API call: cannot cast brightness as int")
+			color = q.Get("colour") + q.Get("color")
+			if brightness, err = strconv.ParseUint(q.Get("brightness"), 10, 8); err != nil {
+				log.Errorf("Processing API call: cannot cast brightness as uint8")
 				w.WriteHeader(http.StatusBadRequest)
 				return
 			}
 			if len(color) == 0 {
-				if temperature, err = strconv.Atoi(r.URL.Query().Get("temperature")); err != nil {
+				if temperature, err = strconv.Atoi(q.Get("temperature")); err != nil {
 					log.Errorf("Processing API call: cannot cast temperature as int")
 					w.WriteHeader(http.StatusBadRequest)
 					return
@@ -63,7 +63,14 @@ func handleBulbApiRequest(w http.ResponseWriter, r *http.Request) {
 			} else {
 				temperature = 0
 			}
-			bulb.TurnBulbOnByName(uint8(brightness), uint(temperature), color, r.URL.Query()["name"]...)
+			err = bulb.TurnBulbOnByName(uint8(brightness), uint(temperature), color, q["name"]...)
+			if err != nil {
+				log.Errorf("Processing API call: failed to turn bulb on: %v", err)
+				w.Write([]byte("Failed to turn bulb on"))
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			w.WriteHeader(http.StatusOK)
 			return
 		default:
 			log.Errorf("Processing API call: parameter `op` has to be either `on` or `off`")

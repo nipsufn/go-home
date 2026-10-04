@@ -93,11 +93,13 @@ func interruptHandler(scopedScheduler gocron.Scheduler, scopedDb *gorm.DB) {
 			}
 		}
 		log.Tracef("job list built")
-		tx := scopedDb.Clauses(onConflictClause).Create(jobs)
-		if tx.Error != nil {
-			log.WithError(tx.Error).Fatalf("could not persist jobs")
+		if len(jobs) > 0 {
+			tx := scopedDb.Clauses(onConflictClause).Create(jobs)
+			if tx.Error != nil {
+				log.WithError(tx.Error).Fatalf("could not persist jobs")
+			}
+			log.Infof("jobs have been persisted")
 		}
-		log.Infof("jobs have been persisted")
 	}
 	err := scopedScheduler.Shutdown()
 	if err != nil {

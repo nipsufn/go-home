@@ -12,12 +12,12 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func Wakeup(scheduler gocron.Scheduler) error {
+func Wakeup(_ gocron.Scheduler) error {
 	log.Infof("running wakeup routine")
 	durationMin := 20
-	sunrise, _ := sunrise.SunriseSunset(
+	sunriseTime, _ := sunrise.SunriseSunset(
 		config.ConfigSingleton.Location.Lat, config.ConfigSingleton.Location.Lon, time.Now().Year(), time.Now().Month(), time.Now().Day())
-	if time.Now().Before((sunrise)) {
+	if time.Now().Before((sunriseTime)) {
 		go fadeInLights(uint8(durationMin))
 	}
 	go fadeInRadio()

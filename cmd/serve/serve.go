@@ -57,9 +57,10 @@ func parseQueryParamsIntoSlice(s []string) []string {
 func bulbHandleFunc(w http.ResponseWriter, r *http.Request) {
 	log.Infof("Processing bulb API call")
 	// /api/bulb?name=bulbName[,bulbName]&op=(on|off)&brightness=0-255&(temperature=2500-6500|color=#RRGGBB|colour=#RRGGBB)
-	log.Tracef("1: %v", r.URL.Query()["name"])
-	r.URL.Query()["name"] = parseQueryParamsIntoSlice(r.URL.Query()["name"])
-	log.Tracef("2: %v", r.URL.Query()["name"])
+	q := r.URL.Query()
+	log.Tracef("1: %v", q["name"])
+	q["name"] = parseQueryParamsIntoSlice(q["name"])
+	log.Tracef("2: %v", q["name"])
 	handleBulbApiRequest(w, r)
 }
 

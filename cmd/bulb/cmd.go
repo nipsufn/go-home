@@ -41,10 +41,10 @@ func newTurnOnCmd() (turnOnCmd *cobra.Command) {
 			return TurnBulbOnByName(brightness, temperature, color, args...)
 		},
 	}
-	turnOnCmd.Flags().Uint8VarP(&brightness, "brightness", "b", 0, "Bulb brightness, 0-255")
+	turnOnCmd.Flags().Uint8VarP(&brightness, "brightness", "b", 0, "Bulb brightness, 25-255")
 	turnOnCmd.MarkFlagRequired("brightness")
-	turnOnCmd.Flags().UintVarP(&temperature, "temperature", "t", 0, "Bulb color temperature, 2500-6500")
-	turnOnCmd.Flags().StringVarP(&color, "color", "c", "", "Bulb color RGB, #RRGGBB")
+	turnOnCmd.Flags().UintVarP(&temperature, "temperature", "t", 0, "Bulb color temperature, 2700-6500")
+	turnOnCmd.Flags().StringVarP(&color, "color", "c", "", "Bulb color RGB, RRGGBB")
 	turnOnCmd.MarkFlagsMutuallyExclusive("temperature", "color")
 	return turnOnCmd
 }

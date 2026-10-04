@@ -51,6 +51,12 @@ func handleAlarmApiRequest(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
+			if parsedUntil.Before(tmpNow) {
+				log.Errorf("Processing API call: until date is in the past")
+				w.Write([]byte("Until date is in the past"))
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
 			updatedUntil := time.Date(
 				parsedUntil.Year(),
 				parsedUntil.Month(),
@@ -87,13 +93,13 @@ func handleAlarmApiRequest(w http.ResponseWriter, r *http.Request) {
 
 	case http.MethodOptions:
 		log.Tracef("Processing API call: OPTIONS")
-		w.Header().Set("Allow", "GET, DELETE, OPTIONS")
+		w.Header().Set("Allow", "GET, DELETE, OPTIONS, DELETE")
 		w.WriteHeader(http.StatusNoContent)
 		return
 
 	default:
 		log.Tracef("Processing API call: method missing")
-		w.Header().Set("Allow", "GET, POST, OPTIONS")
+		w.Header().Set("Allow", "GET, POST, OPTIONS, DELETE")
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 

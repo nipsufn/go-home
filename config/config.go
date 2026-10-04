@@ -77,7 +77,7 @@ func Load(path string) error {
 		log.WithError(err).Panicf("fatal error marshalling config file")
 		return err
 	}
-	if cfg.Serve.Port < 1024 {
+	if cfg.Serve.Port <= 1024 {
 		log.Panicf("config field `serve.port` must > 1024: %d", cfg.Serve.Port)
 	}
 	if cfg.Radio.DefaultStation == "" {
@@ -85,6 +85,9 @@ func Load(path string) error {
 	}
 	if _, ok := cfg.Radio.Stations[cfg.Radio.DefaultStation]; !ok {
 		log.Panicf("config field `radio.defaultStation`: %q not found in stations", cfg.Radio.DefaultStation)
+	}
+	if cfg.Playback.MaxVolume == 0 {
+		log.Panicf("config field `playback.maxVolume` must be set and greater than 0")
 	}
 
 	ConfigSingleton = cfg
